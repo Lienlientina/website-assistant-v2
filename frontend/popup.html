@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Website Assistant</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>AI 助理</h2>
+      <button id="clearHistory" class="clear-btn" title="清除歷史記錄">🗑️</button>
+    </div>
+    
+    <div id="chatContainer" class="chat-container">
+      <!-- 聊天訊息會動態插入這裡 -->
+    </div>
+    
+    <div class="input-container">
+      <div id="screenshotPreview" class="screenshot-preview hidden">
+        <img id="previewImage" src="" alt="截圖預覽">
+        <button id="removeScreenshot" class="remove-screenshot">✕</button>
+      </div>
+      
+      <div class="input-wrapper">
+        <textarea 
+          id="userInput" 
+          placeholder="輸入訊息..." 
+          rows="1"
+        ></textarea>
+        <div class="button-group">
+          <button id="screenshotBtn" class="icon-btn" title="截圖">📷</button>
+          <button id="sendBtn" class="send-btn" title="發送">發送</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="loadingIndicator" class="loading hidden">
+      <span>AI 正在思考中</span>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
