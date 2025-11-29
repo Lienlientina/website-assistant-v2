@@ -1,0 +1,45 @@
+{
+  "available_models": [
+    {
+      "name": "qwen2.5vl:7b",
+      "description": "Qwen2.5 Vision Language Model (7B parameters) - 支援多模態（圖片+文字）",
+      "supports_vision": true,
+      "recommended_for": "圖片分析、多模態對話",
+      "size": "6.0 GB"
+    },
+    {
+      "name": "llava:7b",
+      "description": "LLaVA Vision Model (7B parameters) - 快速的視覺理解模型",
+      "supports_vision": true,
+      "recommended_for": "快速圖片問答",
+      "size": "4.7 GB"
+    },
+    {
+      "name": "llava:13b",
+      "description": "LLaVA Vision Model (13B parameters) - 更強大的視覺理解",
+      "supports_vision": true,
+      "recommended_for": "高精度圖片分析",
+      "size": "8.0 GB"
+    },
+    {
+      "name": "moondream:1.8b",
+      "description": "Moondream Vision Model (1.8B parameters) - 極快速的小型視覺模型",
+      "supports_vision": true,
+      "recommended_for": "快速回應、資源受限環境",
+      "size": "1.7 GB"
+    },
+    {
+      "name": "qwen2.5:7b",
+      "description": "Qwen2.5 Text Model (7B parameters) - 純文字對話（無視覺）",
+      "supports_vision": false,
+      "recommended_for": "純文字對話、更快速度",
+      "size": "4.7 GB"
+    }
+  ],
+  "current_model": "qwen2.5vl:7b",
+  "notes": {
+    "vision_models": "支援圖片的模型，但處理時間較長",
+    "text_models": "僅支援文字，但速度更快",
+    "gpu_acceleration": "遠端 Ollama 使用 GPU 加速，速度會比本地 CPU 快很多"
+  }
+}

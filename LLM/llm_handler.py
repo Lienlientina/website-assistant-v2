@@ -4,6 +4,7 @@ import asyncio
 from dotenv import load_dotenv
 import base64
 import re
+import json
 from io import BytesIO
 from PIL import Image
 
@@ -24,25 +25,64 @@ class LLMHandler:
         self.temperature = float(os.getenv("TEMPERATURE", "0.7"))
         self.max_tokens = int(os.getenv("MAX_TOKENS", "1000"))
         
+        # 載入模型配置
+        self.models_config = self._load_models_config()
+        
         # 初始化 Ollama 客戶端
         self.client = ollama.Client(host=self.base_url)
         
+        print(f"🌐 連接到遠端 Ollama: {self.base_url}")
+        print(f"🤖 使用模型: {self.model_name}")
+        
         # 系統提示詞
-        self.system_prompt = """你是一個友善且專業的 AI 助理，專門幫助用戶理解和分析網頁內容。
+        self.system_prompt = """You are a professional AI assistant specialized in analyzing web content and screenshots.
 
-你的能力包括：
-1. 回答關於網頁內容的問題
-2. 分析用戶提供的截圖
-3. 提供清晰、有幫助的解釋
-4. 記住對話上下文，避免重複詢問
+Your capabilities:
+1. Answer questions about web content accurately
+2. Analyze screenshots in detail
+3. Provide clear and helpful explanations
+4. Remember conversation context
 
-回答時請：
-- 保持簡潔明瞭
-- 使用繁體中文回答
-- 如果看到截圖，請詳細分析其內容
-- 對不確定的內容要誠實說明
-- 回答要自然流暢，避免過於制式化
+CRITICAL RULES:
+- **ALWAYS respond in the SAME LANGUAGE as the user's question**
+  * If user asks in Traditional Chinese (繁體中文) → respond in Traditional Chinese
+  * If user asks in English → respond in English
+  * If user asks in any other language → respond in that language
+- **ALWAYS use Markdown formatting:**
+  * Use **bold** for emphasis
+  * Use lists (- or 1.) for multiple points
+  * Use `code` for technical terms
+  * Use ## or ### for headings
+  * Use > for quotes
+- When analyzing screenshots, be PRECISE and describe what you ACTUALLY SEE
+- If uncertain, say so honestly
+- Keep responses natural and conversational
+
+台灣用語參考（當使用繁體中文時）：
+- 使用「軟體」非「軟件」
+- 使用「網路」非「網絡」
+- 使用「資訊」非「信息」
+- 使用「課程」非「课程」
 """
+    
+    def _load_models_config(self) -> dict:
+        """載入模型配置檔案"""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), 'models_config.json')
+            with open(config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"⚠️  無法載入模型配置: {e}")
+            return {"available_models": [], "current_model": self.model_name}
+    
+    def list_available_models(self) -> List[Dict]:
+        """列出所有可用的模型"""
+        return self.models_config.get("available_models", [])
+    
+    def switch_model(self, model_name: str):
+        """切換使用的模型"""
+        self.model_name = model_name
+        print(f"🔄 已切換到模型: {model_name}")
     
     async def generate_response(
         self, 
@@ -72,7 +112,7 @@ class LLMHandler:
             
             # 添加對話歷史
             if history:
-                for msg in history[-6:]:  # 只取最近 3 輪對話
+                for msg in history[-20:]:  # 取最近 20 條訊息（約 10 輪對話）
                     if msg["role"] == "user":
                         messages.append({
                             "role": "user",
@@ -134,7 +174,7 @@ class LLMHandler:
             img = Image.open(BytesIO(img_data))
             
             # 如果圖片很大，進行壓縮
-            max_size = 768  # 最大邊長（從 1024 降到 768）
+            max_size = 1280  # 提高到 1280px 以保持文字清晰度
             if img.width > max_size or img.height > max_size:
                 # 計算縮放比例
                 ratio = min(max_size / img.width, max_size / img.height)
@@ -145,7 +185,7 @@ class LLMHandler:
                 
                 # 轉換為 JPEG 並壓縮
                 buffer = BytesIO()
-                img.convert('RGB').save(buffer, format='JPEG', quality=60, optimize=True)
+                img.convert('RGB').save(buffer, format='JPEG', quality=85, optimize=True)  # 提高質量到 85
                 
                 # 重新編碼為 base64
                 compressed_data = base64.b64encode(buffer.getvalue()).decode('utf-8')

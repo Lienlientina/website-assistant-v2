@@ -50,7 +50,7 @@ async function captureCurrentTab() {
     // 截取可見區域（使用 JPEG 格式以減小大小）
     const screenshot = await chrome.tabs.captureVisibleTab(null, {
       format: 'jpeg',
-      quality: 60  // 進一步降低品質（從 75 降到 60）
+      quality: 90  // 提高質量到 90 以確保文字清晰
     });
     
     console.log('截圖成功，大小:', screenshot.length, '字元');

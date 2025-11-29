@@ -19,6 +19,33 @@ let currentTabId = null;
 let pollingInterval = null;
 let isWaitingForResponse = false; // 追蹤是否正在等待回應
 
+// 簡單的 Markdown 解析器
+function parseMarkdown(text) {
+  return text
+    // 程式碼區塊 ```code```
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    // 行內程式碼 `code`
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // 粗體 **bold**
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // 斜體 *italic*
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // 標題 ### Heading
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // 無序列表 - item 或 * item
+    .replace(/^[*-] (.+)$/gm, '<li>$1</li>')
+    // 有序列表 1. item
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    // 包裝列表項
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    // 引用 > quote
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // 換行
+    .replace(/\n/g, '<br>');
+}
+
 // 初始化
 async function init() {
   // 獲取當前 tab ID
@@ -145,7 +172,15 @@ function addMessageToUI(role, content, image = null) {
   }
   
   const textDiv = document.createElement('div');
-  textDiv.textContent = content;
+  textDiv.className = 'message-text';
+  
+  // 如果是 AI 回應，使用簡單的 Markdown 渲染
+  if (role === 'assistant') {
+    textDiv.innerHTML = parseMarkdown(content);
+  } else {
+    textDiv.textContent = content;
+  }
+  
   contentDiv.appendChild(textDiv);
   
   messageDiv.appendChild(contentDiv);
@@ -279,7 +314,7 @@ async function sendMessage() {
     tabId: currentTabId,
     message: messageToSend,
     image: screenshotToSend,
-    history: conversationHistory.slice(-6).map(msg => ({
+    history: conversationHistory.slice(-20).map(msg => ({
       role: msg.role,
       content: msg.content,
       // 不發送歷史訊息中的圖片，只發送文字

@@ -111,6 +111,100 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* Markdown 樣式 */
+.message.assistant .message-content p {
+  margin: 0.5em 0;
+}
+
+.message.assistant .message-content p:first-child {
+  margin-top: 0;
+}
+
+.message.assistant .message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message.assistant .message-content strong {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.message.assistant .message-content em {
+  font-style: italic;
+  color: #555;
+}
+
+.message.assistant .message-content code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+}
+
+.message.assistant .message-content pre {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.message.assistant .message-content pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 0.85em;
+}
+
+.message.assistant .message-content ul,
+.message.assistant .message-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.message.assistant .message-content li {
+  margin: 4px 0;
+}
+
+.message.assistant .message-content blockquote {
+  border-left: 3px solid #667eea;
+  padding-left: 12px;
+  margin: 8px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.message.assistant .message-content h1,
+.message.assistant .message-content h2,
+.message.assistant .message-content h3 {
+  margin: 12px 0 8px 0;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.message.assistant .message-content h1 {
+  font-size: 1.4em;
+}
+
+.message.assistant .message-content h2 {
+  font-size: 1.2em;
+}
+
+.message.assistant .message-content h3 {
+  font-size: 1.1em;
+}
+
+.message.assistant .message-content a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.message.assistant .message-content a:hover {
+  text-decoration: underline;
+}
+
 .message-image {
   max-width: 100%;
   border-radius: 8px;
