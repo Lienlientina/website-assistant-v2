@@ -3,6 +3,7 @@
 """
 import os
 import json
+import shutil
 from typing import List, Dict, Optional
 import chromadb
 from chromadb.config import Settings
@@ -12,12 +13,13 @@ from sentence_transformers import SentenceTransformer
 class KnowledgeBase:
     """知識庫向量資料庫管理器"""
     
-    def __init__(self, persist_directory: str = None):
+    def __init__(self, persist_directory: str = None, auto_cleanup: bool = True):
         """
         初始化知識庫
         
         Args:
             persist_directory: ChromaDB 持久化儲存路徑
+            auto_cleanup: 是否自動清理舊的向量資料庫
         """
         if persist_directory is None:
             persist_directory = os.path.join(
@@ -25,6 +27,12 @@ class KnowledgeBase:
                 'knowledge', 
                 'vectordb'
             )
+        
+        self.persist_directory = persist_directory
+        
+        # 自動清理舊版本
+        if auto_cleanup:
+            self._cleanup_old_versions()
         
         # 確保目錄存在
         os.makedirs(persist_directory, exist_ok=True)
@@ -44,6 +52,31 @@ class KnowledgeBase:
         )
         
         print(f"📚 知識庫已初始化，共 {self.collection.count()} 條文檔")
+    
+    def _cleanup_old_versions(self):
+        """清理舊的向量資料庫版本，保持目錄乾淨"""
+        if not os.path.exists(self.persist_directory):
+            return
+        
+        try:
+            # 列出所有 UUID 資料夾
+            uuid_folders = []
+            for item in os.listdir(self.persist_directory):
+                item_path = os.path.join(self.persist_directory, item)
+                if os.path.isdir(item_path) and len(item) == 36:  # UUID 長度
+                    uuid_folders.append(item_path)
+            
+            # 如果有多個舊版本，刪除所有（下次會重新生成一個乾淨的）
+            if len(uuid_folders) > 1:
+                print(f"🧹 清理 {len(uuid_folders)} 個舊的向量資料庫版本...")
+                for folder in uuid_folders:
+                    try:
+                        shutil.rmtree(folder)
+                    except Exception as e:
+                        print(f"⚠️  無法刪除 {folder}: {e}")
+                print("✅ 清理完成")
+        except Exception as e:
+            print(f"⚠️  清理過程發生錯誤: {e}")
     
     def load_knowledge_from_json(self, json_path: str):
         """
