@@ -46,5 +46,17 @@ Thumbs.db
 *.db
 *.sqlite
 
+# 向量資料庫（大檔案，自動生成）
+LLM/knowledge/vectordb/
+
+# 模型檔案（如果下載了本地模型）
+*.bin
+*.safetensors
+*.gguf
+
+# 測試文件
+test_search.py
+*.test.py
+
 # Chrome Extension
 frontend/icons/*.png

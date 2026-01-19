@@ -11,6 +11,9 @@ from PIL import Image
 # 使用 ollama Python SDK
 import ollama
 
+# 導入知識庫管理器
+from knowledge_base import KnowledgeBase
+
 # 載入環境變數
 load_dotenv()
 
@@ -34,36 +37,14 @@ class LLMHandler:
         print(f"🌐 連接到遠端 Ollama: {self.base_url}")
         print(f"🤖 使用模型: {self.model_name}")
         
-        # 系統提示詞
-        self.system_prompt = """You are a professional AI assistant specialized in analyzing web content and screenshots.
+        # 初始化知識庫
+        self.knowledge_base = self._init_knowledge_base()
+        
+        # 載入系統提示詞
+        self.system_prompt = self._load_system_prompt()
+        print(f"📋 系統提示詞已載入")
 
-Your capabilities:
-1. Answer questions about web content accurately
-2. Analyze screenshots in detail
-3. Provide clear and helpful explanations
-4. Remember conversation context
 
-CRITICAL RULES:
-- **ALWAYS respond in the SAME LANGUAGE as the user's question**
-  * If user asks in Traditional Chinese (繁體中文) → respond in Traditional Chinese
-  * If user asks in English → respond in English
-  * If user asks in any other language → respond in that language
-- **ALWAYS use Markdown formatting:**
-  * Use **bold** for emphasis
-  * Use lists (- or 1.) for multiple points
-  * Use `code` for technical terms
-  * Use ## or ### for headings
-  * Use > for quotes
-- When analyzing screenshots, be PRECISE and describe what you ACTUALLY SEE
-- If uncertain, say so honestly
-- Keep responses natural and conversational
-
-台灣用語參考（當使用繁體中文時）：
-- 使用「軟體」非「軟件」
-- 使用「網路」非「網絡」
-- 使用「資訊」非「信息」
-- 使用「課程」非「课程」
-"""
     
     def _load_models_config(self) -> dict:
         """載入模型配置檔案"""
@@ -74,6 +55,42 @@ CRITICAL RULES:
         except Exception as e:
             print(f"⚠️  無法載入模型配置: {e}")
             return {"available_models": [], "current_model": self.model_name}
+    
+    def _load_system_prompt(self) -> str:
+        """從文件載入系統提示詞"""
+        try:
+            prompt_path = os.path.join(os.path.dirname(__file__), 'knowledge', 'system_rules.txt')
+            with open(prompt_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            print(f"⚠️  無法載入系統提示詞: {e}，使用預設值")
+            return "你是一個有幫助的AI助理。"
+    
+    def _init_knowledge_base(self) -> Optional[KnowledgeBase]:
+        """初始化知識庫"""
+        try:
+            kb = KnowledgeBase()
+            
+            # 如果知識庫是空的，載入資料
+            if kb.collection.count() == 0:
+                print("📚 知識庫為空，開始載入資料...")
+                knowledge_path = os.path.join(
+                    os.path.dirname(__file__), 
+                    'knowledge', 
+                    'qa_knowledge.json'
+                )
+                if os.path.exists(knowledge_path):
+                    kb.load_knowledge_from_json(knowledge_path)
+                else:
+                    print(f"⚠️  找不到知識庫文件: {knowledge_path}")
+                    return None
+            
+            stats = kb.get_stats()
+            print(f"✅ 知識庫已就緒: {stats['total_documents']} 條文檔")
+            return kb
+        except Exception as e:
+            print(f"❌ 知識庫初始化失敗: {e}")
+            return None
     
     def list_available_models(self) -> List[Dict]:
         """列出所有可用的模型"""
@@ -102,11 +119,25 @@ CRITICAL RULES:
             AI 的回應文字
         """
         try:
+            # RAG: 檢索相關知識
+            relevant_knowledge = ""
+            if self.knowledge_base and message:
+                search_results = self.knowledge_base.search(message, top_k=3)
+                if search_results:
+                    relevant_knowledge = "\n\n## 相關知識參考：\n"
+                    for i, result in enumerate(search_results, 1):
+                        relevant_knowledge += f"\n{i}. [{result['category']}] {result['content']}\n"
+            
+            # 構建系統提示詞（包含檢索到的知識）
+            system_content = self.system_prompt
+            if relevant_knowledge:
+                system_content += relevant_knowledge
+            
             # 構建訊息列表
             messages = [
                 {
                     "role": "system",
-                    "content": self.system_prompt
+                    "content": system_content
                 }
             ]
             
