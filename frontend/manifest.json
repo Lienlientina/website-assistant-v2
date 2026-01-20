@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Website Assistant",
-  "version": "1.0.0",
-  "description": "AI助理，支援截圖和多模態對話",
+  "version": "2.0.0",
+  "description": "智能網站助理，基於 RAG 技術提供領域專業知識（當前配置：成大請假系統）",
   "permissions": [
     "activeTab",
     "storage",

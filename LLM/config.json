@@ -1,0 +1,12 @@
+{
+  "current_knowledge_base": "ncku_leave_system",
+  "knowledge_bases": {
+    "ncku_leave_system": {
+      "name": "成功大學請假系統",
+      "description": "成大學生請假系統智慧助理，提供請假規則、證明文件、申請流程等完整知識",
+      "system_rules_path": "knowledge_bases/ncku_leave_system/system_rules.txt",
+      "qa_knowledge_path": "knowledge_bases/ncku_leave_system/qa_knowledge.json",
+      "vectordb_path": "knowledge_bases/ncku_leave_system/vectordb"
+    }
+  }
+}

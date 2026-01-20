@@ -28,14 +28,14 @@ class LLMHandler:
         self.temperature = float(os.getenv("TEMPERATURE", "0.7"))
         self.max_tokens = int(os.getenv("MAX_TOKENS", "1000"))
         
-        # 載入模型配置
-        self.models_config = self._load_models_config()
-        
         # 初始化 Ollama 客戶端
         self.client = ollama.Client(host=self.base_url)
         
         print(f"🌐 連接到遠端 Ollama: {self.base_url}")
         print(f"🤖 使用模型: {self.model_name}")
+        
+        # 載入知識庫配置
+        self.config = self._load_config()
         
         # 初始化知識庫
         self.knowledge_base = self._init_knowledge_base()
@@ -43,23 +43,38 @@ class LLMHandler:
         # 載入系統提示詞
         self.system_prompt = self._load_system_prompt()
         print(f"📋 系統提示詞已載入")
-
-
     
-    def _load_models_config(self) -> dict:
-        """載入模型配置檔案"""
+    def _load_config(self) -> Dict:
+        """載入知識庫配置"""
         try:
-            config_path = os.path.join(os.path.dirname(__file__), 'models_config.json')
+            config_path = os.path.join(os.path.dirname(__file__), 'config.json')
             with open(config_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                config = json.load(f)
+            
+            current_kb = config['current_knowledge_base']
+            kb_info = config['knowledge_bases'][current_kb]
+            print(f"📦 當前知識庫: {kb_info['name']}")
+            print(f"   {kb_info['description']}")
+            return config
         except Exception as e:
-            print(f"⚠️  無法載入模型配置: {e}")
-            return {"available_models": [], "current_model": self.model_name}
+            print(f"⚠️  無法載入配置文件: {e}，使用預設值")
+            return {
+                "current_knowledge_base": "ncku_leave_system",
+                "knowledge_bases": {
+                    "ncku_leave_system": {
+                        "system_rules_path": "knowledge_bases/ncku_leave_system/system_rules.txt",
+                        "qa_knowledge_path": "knowledge_bases/ncku_leave_system/qa_knowledge.json",
+                        "vectordb_path": "knowledge_bases/ncku_leave_system/vectordb"
+                    }
+                }
+            }
     
     def _load_system_prompt(self) -> str:
         """從文件載入系統提示詞"""
         try:
-            prompt_path = os.path.join(os.path.dirname(__file__), 'knowledge', 'system_rules.txt')
+            current_kb = self.config['current_knowledge_base']
+            kb_config = self.config['knowledge_bases'][current_kb]
+            prompt_path = os.path.join(os.path.dirname(__file__), kb_config['system_rules_path'])
             with open(prompt_path, 'r', encoding='utf-8') as f:
                 return f.read()
         except Exception as e:
@@ -69,15 +84,19 @@ class LLMHandler:
     def _init_knowledge_base(self) -> Optional[KnowledgeBase]:
         """初始化知識庫"""
         try:
-            kb = KnowledgeBase()
+            current_kb = self.config['current_knowledge_base']
+            kb_config = self.config['knowledge_bases'][current_kb]
+            
+            # 初始化知識庫（傳入 vectordb 路徑）
+            vectordb_path = os.path.join(os.path.dirname(__file__), kb_config['vectordb_path'])
+            kb = KnowledgeBase(persist_directory=vectordb_path)
             
             # 如果知識庫是空的，載入資料
             if kb.collection.count() == 0:
                 print("📚 知識庫為空，開始載入資料...")
                 knowledge_path = os.path.join(
                     os.path.dirname(__file__), 
-                    'knowledge', 
-                    'qa_knowledge.json'
+                    kb_config['qa_knowledge_path']
                 )
                 if os.path.exists(knowledge_path):
                     kb.load_knowledge_from_json(knowledge_path)
@@ -91,15 +110,6 @@ class LLMHandler:
         except Exception as e:
             print(f"❌ 知識庫初始化失敗: {e}")
             return None
-    
-    def list_available_models(self) -> List[Dict]:
-        """列出所有可用的模型"""
-        return self.models_config.get("available_models", [])
-    
-    def switch_model(self, model_name: str):
-        """切換使用的模型"""
-        self.model_name = model_name
-        print(f"🔄 已切換到模型: {model_name}")
     
     async def generate_response(
         self, 
