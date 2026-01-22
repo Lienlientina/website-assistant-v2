@@ -58,6 +58,7 @@ LLM/knowledge_bases/*/vectordb/
 test_search.py
 test_config.py
 *.test.py
+test_*.py
 
 # Chrome Extension
 frontend/icons/*.png
