@@ -5,7 +5,7 @@
 ## 專案預覽
 
 <p align="center">
-  <img src="screenshots/fullscreen.png" width="600" alt="website with extension popup">
+  <img src="screenshots/fullscreen.png" width="800" alt="website with extension popup">
 </p>
 
 ## 🌟 專案亮點
